@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aiops-app
+  labels:
+    app: aiops-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aiops-app
+  template:
+    metadata:
+      labels:
+        app: aiops-app
+    spec:
+      containers:
+        - name: aiops-app
+          image: aiops-app:v1  # Must match your local Docker image
+          imagePullPolicy: IfNotPresent  # This must be **inside the container**
+          ports:
+            - containerPort: 8000
+

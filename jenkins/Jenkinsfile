@@ -1,0 +1,34 @@
+pipeline {
+    agent any
+
+    environment {
+        IMAGE_NAME = "aiops-app:${env.BUILD_NUMBER}"
+    }
+
+    stages {
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t $IMAGE_NAME ./docker'
+            }
+        }
+
+        stage('Load to Kind') {
+            steps {
+                sh 'kind load docker-image $IMAGE_NAME --name aiops-cluster'
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                sh 'helm upgrade --install aiops-app helm/aiops-app'
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                sh 'pytest tests'
+            }
+        }
+    }
+}
+
