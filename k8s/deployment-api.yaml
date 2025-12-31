@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aiops-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aiops-api
+  template:
+    metadata:
+      labels:
+        app: aiops-api
+    spec:
+      containers:
+        - name: api
+          image: aiops-app:1.0
+          ports:
+            - containerPort: 8000
+

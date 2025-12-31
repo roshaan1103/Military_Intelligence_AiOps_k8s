@@ -3,7 +3,12 @@ apiVersion: kind.x-k8s.io/v1alpha4
 nodes:
   - role: control-plane
     extraPortMappings:
-      - containerPort: 30080
+      - containerPort: 30080   # aiops-app
         hostPort: 8080
         protocol: TCP
+      - containerPort: 30000   # jenkins
+        hostPort: 8081
+        protocol: TCP
+  - role: worker
+  - role: worker
 
