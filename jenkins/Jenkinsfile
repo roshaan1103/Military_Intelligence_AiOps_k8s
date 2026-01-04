@@ -2,31 +2,40 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "aiops-app:${env.BUILD_NUMBER}"
+        IMAGE_NAME = "aiops-app"
+        IMAGE_TAG  = "1.1"
+        CLUSTER    = "aiops-cluster"
     }
 
     stages {
-        stage('Build Docker Image') {
+        stage('Checkout') {
             steps {
-                sh 'docker build -t $IMAGE_NAME ./docker'
+                checkout scm
             }
         }
 
-        stage('Load to Kind') {
+        stage('Build Docker Image') {
             steps {
-                sh 'kind load docker-image $IMAGE_NAME --name aiops-cluster'
+                sh '''
+                docker build -t $IMAGE_NAME:$IMAGE_TAG -f docker/Dockerfile .
+                '''
+            }
+        }
+
+        stage('Load Image into kind') {
+            steps {
+                sh '''
+                kind load docker-image $IMAGE_NAME:$IMAGE_TAG --name $CLUSTER
+                '''
             }
         }
 
         stage('Deploy to Kubernetes') {
             steps {
-                sh 'helm upgrade --install aiops-app helm/aiops-app'
-            }
-        }
-
-        stage('Run Tests') {
-            steps {
-                sh 'pytest tests'
+                sh '''
+                kubectl apply -f k8s/
+                kubectl rollout restart deployment aiops-app
+                '''
             }
         }
     }
