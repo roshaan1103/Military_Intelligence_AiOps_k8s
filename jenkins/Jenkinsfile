@@ -1,43 +1,50 @@
 pipeline {
-    agent any
+  agent any
 
-    environment {
-        IMAGE_NAME = "aiops-app"
-        IMAGE_TAG  = "1.1"
-        CLUSTER    = "aiops-cluster"
+  environment {
+    IMAGE_NAME = "aiops-app"
+    IMAGE_TAG  = "jenkins-${BUILD_NUMBER}"
+  }
+
+  stages {
+
+    stage('Checkout') {
+      steps {
+        checkout([
+          $class: 'GitSCM',
+          branches: [[name: '*/main']],
+          userRemoteConfigs: [[
+            url: 'https://github.com/roshaan1103/Military_Intelligence_AiOps_k8s.git',
+            credentialsId: 'github-cred'
+          ]]
+        ])
+      }
     }
 
-    stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-
-        stage('Build Docker Image') {
-            steps {
-                sh '''
-                docker build -t $IMAGE_NAME:$IMAGE_TAG -f docker/Dockerfile .
-                '''
-            }
-        }
-
-        stage('Load Image into kind') {
-            steps {
-                sh '''
-                kind load docker-image $IMAGE_NAME:$IMAGE_TAG --name $CLUSTER
-                '''
-            }
-        }
-
-        stage('Deploy to Kubernetes') {
-            steps {
-                sh '''
-                kubectl apply -f k8s/
-                kubectl rollout restart deployment aiops-app
-                '''
-            }
-        }
+    stage('Build Image') {
+      steps {
+        sh '''
+          docker build -t ${IMAGE_NAME}:${IMAGE_TAG} -f docker/Dockerfile .
+        '''
+      }
     }
+
+    stage('Load Image into KIND') {
+      steps {
+        sh '''
+          kind load docker-image ${IMAGE_NAME}:${IMAGE_TAG} --name aiops-cluster
+        '''
+      }
+    }
+
+    stage('Deploy to Kubernetes') {
+      steps {
+        sh '''
+          kubectl set image deployment/aiops-app \
+            aiops-app=${IMAGE_NAME}:${IMAGE_TAG}
+        '''
+      }
+    }
+  }
 }
 

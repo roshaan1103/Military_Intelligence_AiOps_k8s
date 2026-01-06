@@ -14,6 +14,6 @@ spec:
     spec:
       containers:
         - name: generator
-          image: aiops-app:1.0
+          image: aiops-app:1.1
           command: ["python", "generator.py"]
 

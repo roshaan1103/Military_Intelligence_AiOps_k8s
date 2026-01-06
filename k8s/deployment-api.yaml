@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: api
-          image: aiops-app:1.0
+          image: aiops-app:1.1
           ports:
             - containerPort: 8000
 
