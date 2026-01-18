@@ -23,7 +23,7 @@ spec:
     emptyDir: {}
 """
     }
-
+    }
     environment {
          IMAGE_NAME = "aiops-app"
     	 IMAGE_TAG  = "jenkins-${BUILD_NUMBER}"
@@ -80,4 +80,3 @@ spec:
         
     }
 }
-
