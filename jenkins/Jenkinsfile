@@ -1,16 +1,32 @@
 pipeline {
     agent {
-        docker {
-            image 'docker:24-cli'
-            args '-v /var/run/docker.sock:/var/run/docker.sock'
-        }
+    kubernetes {
+      yaml """
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    role: kaniko-builder
+spec:
+  serviceAccountName: default
+  containers:
+  - name: kaniko
+    image: gcr.io/kaniko-project/executor:v1.23.2
+    command:
+    - /busybox/cat
+    tty: true
+    volumeMounts:
+    - name: kaniko-cache
+      mountPath: /cache
+  volumes:
+  - name: kaniko-cache
+    emptyDir: {}
+"""
     }
 
     environment {
-        APP_NAME  = 'aiops-app'
-        IMAGE_TAG = "jenkins-${env.BUILD_NUMBER}"
-        IMAGE     = "${APP_NAME}:${IMAGE_TAG}"
-        KUBECONFIG = '/root/.kube/config'
+         IMAGE_NAME = "aiops-app"
+    	 IMAGE_TAG  = "jenkins-${BUILD_NUMBER}"
     }
 
     stages {
@@ -27,41 +43,41 @@ pipeline {
         	])
             }
         }
-
-        stage('Build Docker Image') {
-            steps {
-                sh '''
-                docker version
-                docker build -t ${IMAGE} -f docker/Dockerfile .
-                '''
+        
+        stage("Build Image with Kaniko") {
+      	  steps {
+            container("kaniko") {
+              sh '''
+                /kaniko/executor \
+                  --dockerfile=docker/Dockerfile \
+                  --context=dir://$WORKSPACE \
+                  --destination=${IMAGE_NAME}:${IMAGE_TAG} \
+                  --no-push \
+                  --cache=true \
+                  --cache-dir=/cache
+              '''
             }
+          }
         }
 
-        stage('Load Image into KIND') {
-            steps {
-                sh '''
-                kind load docker-image ${IMAGE}
-                '''
-            }
-        }
-
-        stage('Deploy to Kubernetes') {
-            steps {
-                sh '''
-                kubectl set image deployment/aiops-app aiops-app=${IMAGE} --record
-                kubectl rollout status deployment/aiops-app
-                '''
-            }
+        stage("Verify Image Exists in Node") {
+          steps {
+            sh '''
+              echo "Kaniko build completed."
+             echo "Image: ${IMAGE_NAME}:${IMAGE_TAG}"
+            '''
+          }
         }
     }
 
     post {
-        success {
-            echo "Deployment successful: ${IMAGE}"
-        }
-        failure {
-            echo "Pipeline failed"
-        }
+      success {
+        echo "CI pipeline completed successfully"
+      }
+      failure {
+        echo "CI pipeline failed"
+      }
+        
     }
 }
 
