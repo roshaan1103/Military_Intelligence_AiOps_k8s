@@ -1,50 +1,51 @@
 pipeline {
-  agent any
-
-  environment {
-    IMAGE_NAME = "aiops-app"
-    IMAGE_TAG  = "jenkins-${BUILD_NUMBER}"
-  }
-
-  stages {
-
-    stage('Checkout') {
-      steps {
-        checkout([
-          $class: 'GitSCM',
-          branches: [[name: '*/main']],
-          userRemoteConfigs: [[
-            url: 'https://github.com/roshaan1103/Military_Intelligence_AiOps_k8s.git',
-            credentialsId: 'github-cred'
-          ]]
-        ])
-      }
+    agent {
+        docker {
+            image 'docker:24-cli'        // Docker CLI image
+            args '-v /var/run/docker.sock:/var/run/docker.sock'  // Mount host Docker socket
+        }
     }
 
-    stage('Build Image') {
-      steps {
-        sh '''
-          docker build -t ${IMAGE_NAME}:${IMAGE_TAG} -f docker/Dockerfile .
-        '''
-      }
+    environment {
+        IMAGE_NAME = 'aiops-app'
+        IMAGE_TAG  = "jenkins-${env.BUILD_NUMBER}"
     }
 
-    stage('Load Image into KIND') {
-      steps {
-        sh '''
-          kind load docker-image ${IMAGE_NAME}:${IMAGE_TAG} --name aiops-cluster
-        '''
-      }
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} -f docker/Dockerfile ."
+            }
+        }
+
+        stage('Push Docker Image (Optional)') {
+            steps {
+                // Push only if you have a registry (DockerHub / GitHub Container Registry)
+                // sh "docker push ${IMAGE_NAME}:${IMAGE_TAG}"
+                echo "Skipping push for local testing"
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                sh """
+                kubectl set image deployment/aiops-app aiops-app=${IMAGE_NAME}:${IMAGE_TAG} --record
+                kubectl rollout status deployment/aiops-app
+                """
+            }
+        }
     }
 
-    stage('Deploy to Kubernetes') {
-      steps {
-        sh '''
-          kubectl set image deployment/aiops-app \
-            aiops-app=${IMAGE_NAME}:${IMAGE_TAG}
-        '''
-      }
+    post {
+        always {
+            echo "Build ${env.BUILD_NUMBER} finished."
+        }
     }
-  }
 }
 
