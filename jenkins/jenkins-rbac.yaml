@@ -1,10 +1,22 @@
+# jenkins-rbac.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: jenkins
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: jenkins
+  namespace: jenkins
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: jenkins-admin
 subjects:
 - kind: ServiceAccount
-  name: default
+  name: jenkins
   namespace: jenkins
 roleRef:
   kind: ClusterRole

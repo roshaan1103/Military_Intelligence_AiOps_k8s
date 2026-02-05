@@ -1,3 +1,4 @@
+# jenkins.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -13,17 +14,18 @@ spec:
       labels:
         app: jenkins
     spec:
+      serviceAccountName: jenkins
       containers:
       - name: jenkins
         image: jenkins/jenkins:lts
         ports:
         - containerPort: 8080
         volumeMounts:
-          - name: jenkins-home
-            mountPath: /var/jenkins_home
-      volumes:
         - name: jenkins-home
-          emptyDir: {}
+          mountPath: /var/jenkins_home
+      volumes:
+      - name: jenkins-home
+        emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
@@ -31,10 +33,10 @@ metadata:
   name: jenkins-service
   namespace: jenkins
 spec:
-  selector:
-    app: jenkins
   type: NodePort
   ports:
-    - protocol: TCP
-      port: 8080
-      nodePort: 30000
+  - port: 8080
+    nodePort: 30000
+  selector:
+    app: jenkins
+

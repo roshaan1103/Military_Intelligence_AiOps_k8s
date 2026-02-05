@@ -1,82 +1,44 @@
 pipeline {
-    agent {
+  agent {
     kubernetes {
-      yaml """
-apiVersion: v1
-kind: Pod
-metadata:
-  labels:
-    role: kaniko-builder
-spec:
-  serviceAccountName: default
-  containers:
-  - name: kaniko
-    image: gcr.io/kaniko-project/executor:v1.23.2
-    command:
-    - /busybox/cat
-    tty: true
-    volumeMounts:
-    - name: kaniko-cache
-      mountPath: /cache
-  volumes:
-  - name: kaniko-cache
-    emptyDir: {}
-"""
+      label 'test-agent'
+      defaultContainer 'jnlp'
     }
-    }
-    environment {
-         IMAGE_NAME = "aiops-app"
-    	 IMAGE_TAG  = "jenkins-${BUILD_NUMBER}"
-    }
+  }
 
-    stages {
+  environment {
+    IMAGE_NAME = "localhost:5000/aiops-app"
+    IMAGE_TAG  = "latest"
+  }
 
-        stage('Checkout') {
-            steps {
-                checkout([
-                    $class: 'GitSCM',
-            	    branches: [[name: '*/main']],
-                    userRemoteConfigs: [[
-                	url: 'https://github.com/roshaan1103/Military_Intelligence_AiOps_k8s.git',
-                	credentialsId: 'github-cred'
-            	    ]]
-        	])
-            }
-        }
-        
-        stage("Build Image with Kaniko") {
-      	  steps {
-            container("kaniko") {
-              sh '''
-                /kaniko/executor \
-                  --dockerfile=docker/Dockerfile \
-                  --context=dir://$WORKSPACE \
-                  --destination=${IMAGE_NAME}:${IMAGE_TAG} \
-                  --no-push \
-                  --cache=true \
-                  --cache-dir=/cache
-              '''
-            }
-          }
-        }
+  stages {
 
-        stage("Verify Image Exists in Node") {
-          steps {
-            sh '''
-              echo "Kaniko build completed."
-             echo "Image: ${IMAGE_NAME}:${IMAGE_TAG}"
-            '''
-          }
-        }
-    }
-
-    post {
-      success {
-        echo "CI pipeline completed successfully"
+    stage('Checkout') {
+      steps {
+        checkout scm
       }
-      failure {
-        echo "CI pipeline failed"
-      }
-        
     }
+
+    stage('Build Image with Kaniko') {
+      steps {
+        sh '''
+        /kaniko/executor \
+          --dockerfile=Dockerfile \
+          --context=dir://. \
+          --destination=${IMAGE_NAME}:${IMAGE_TAG} \
+          --skip-tls-verify
+        '''
+      }
+    }
+
+    stage('Deploy to KIND') {
+      steps {
+        sh '''
+        kubectl apply -f k8s/deployment.yaml
+        kubectl rollout status deployment/aiops-app
+        '''
+      }
+    }
+  }
 }
+
