@@ -1,9 +1,16 @@
 pipeline {
-  agent none
+  agent {
+    kubernetes {
+      label 'jenkins-agent'
+      defaultContainer 'jnlp'
+    }
+  }
+
   stages {
-    stage('IDENTITY CHECK') {
+    stage('Smoke') {
       steps {
-        echo 'THIS IS THE NEW JENKINSFILE - OPTION A'
+        sh 'echo Connected to Kubernetes agent'
+        sh 'env | grep JENKINS'
       }
     }
   }
