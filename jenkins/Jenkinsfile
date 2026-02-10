@@ -1,16 +1,9 @@
 pipeline {
-  agent {
-    kubernetes {
-      label 'jenkins-agent'
-      defaultContainer 'jnlp'
-    }
-  }
-
+  agent none
   stages {
-    stage('Test') {
+    stage('IDENTITY CHECK') {
       steps {
-        sh 'echo Running on Kubernetes agent'
-        sh 'hostname'
+        echo 'THIS IS THE NEW JENKINSFILE - OPTION A'
       }
     }
   }
