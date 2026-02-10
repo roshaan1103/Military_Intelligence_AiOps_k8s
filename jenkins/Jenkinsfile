@@ -2,22 +2,15 @@ pipeline {
   agent {
     kubernetes {
       label 'jenkins-agent'
+      defaultContainer 'jnlp'
     }
   }
 
   stages {
-    stage('Agent sanity') {
+    stage('Test') {
       steps {
-        sh '''
-          echo "Agent hostname:"
-          hostname
-
-          echo "Kubectl version:"
-          kubectl version --client
-
-          echo "Cluster access:"
-          kubectl get nodes
-        '''
+        sh 'echo Running on Kubernetes agent'
+        sh 'hostname'
       }
     }
   }
