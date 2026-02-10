@@ -11,6 +11,7 @@ spec:
   - name: jnlp
     image: jenkins/inbound-agent:latest
     args:
+      - -webSocket
       - \$(JENKINS_SECRET)
       - \$(JENKINS_NAME)
 """
