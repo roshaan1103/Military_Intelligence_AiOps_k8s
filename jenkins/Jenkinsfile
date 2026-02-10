@@ -1,41 +1,22 @@
 pipeline {
   agent {
     kubernetes {
-      label 'test-agent'
-      defaultContainer 'jnlp'
+      label 'jenkins-agent'
     }
-  }
-
-  environment {
-    IMAGE_NAME = "localhost:5000/aiops-app"
-    IMAGE_TAG  = "latest"
   }
 
   stages {
-
-    stage('Checkout') {
-      steps {
-        checkout scm
-      }
-    }
-
-    stage('Build Image with Kaniko') {
+    stage('Agent sanity') {
       steps {
         sh '''
-        /kaniko/executor \
-          --dockerfile=Dockerfile \
-          --context=dir://. \
-          --destination=${IMAGE_NAME}:${IMAGE_TAG} \
-          --skip-tls-verify
-        '''
-      }
-    }
+          echo "Agent hostname:"
+          hostname
 
-    stage('Deploy to KIND') {
-      steps {
-        sh '''
-        kubectl apply -f k8s/deployment.yaml
-        kubectl rollout status deployment/aiops-app
+          echo "Kubectl version:"
+          kubectl version --client
+
+          echo "Cluster access:"
+          kubectl get nodes
         '''
       }
     }

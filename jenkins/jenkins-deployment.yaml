@@ -1,4 +1,3 @@
-# jenkins.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -14,29 +13,19 @@ spec:
       labels:
         app: jenkins
     spec:
-      serviceAccountName: jenkins
+      securityContext:
+        fsGroup: 1000
       containers:
       - name: jenkins
         image: jenkins/jenkins:lts
         ports:
         - containerPort: 8080
+        - containerPort: 50000
         volumeMounts:
         - name: jenkins-home
           mountPath: /var/jenkins_home
       volumes:
       - name: jenkins-home
-        emptyDir: {}
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: jenkins-service
-  namespace: jenkins
-spec:
-  type: NodePort
-  ports:
-  - port: 8080
-    nodePort: 30000
-  selector:
-    app: jenkins
+        persistentVolumeClaim:
+          claimName: jenkins-pvc
 
