@@ -3,6 +3,17 @@ pipeline {
     kubernetes {
       label 'jenkins-agent'
       defaultContainer 'jnlp'
+      yaml """
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: jnlp
+    image: jenkins/inbound-agent:latest
+    args:
+      - \$(JENKINS_SECRET)
+      - \$(JENKINS_NAME)
+"""
     }
   }
 
