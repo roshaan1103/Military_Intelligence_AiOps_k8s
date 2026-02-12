@@ -15,7 +15,8 @@ spec:
     spec:
       containers:
       - name: app
-        image: localhost:5000/aiops-app:latest
+        image: roshaan1103/mi-aiops-app:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 8080
 

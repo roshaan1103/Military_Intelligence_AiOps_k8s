@@ -15,15 +15,18 @@ spec:
     spec:
       securityContext:
         fsGroup: 1000
+      serviceAccountName: jenkins
       containers:
       - name: jenkins
-        image: jenkins/jenkins:lts
+        image: jenkins-custom:2.0
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8080
         - containerPort: 50000
         volumeMounts:
         - name: jenkins-home
           mountPath: /var/jenkins_home
+
       volumes:
       - name: jenkins-home
         persistentVolumeClaim:
