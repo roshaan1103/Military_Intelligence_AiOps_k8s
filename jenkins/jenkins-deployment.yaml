@@ -16,9 +16,11 @@ spec:
       securityContext:
         fsGroup: 1000
       serviceAccountName: jenkins
+      imagePullSecrets:
+      - name: dockerhub-secret
       containers:
       - name: jenkins
-        image: jenkins-custom:2.0
+        image: jenkins-custom:3.0
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8080
@@ -26,9 +28,19 @@ spec:
         volumeMounts:
         - name: jenkins-home
           mountPath: /var/jenkins_home
+        - name: docker-config
+          mountPath: /kaniko/.docker
+          readOnly: true
 
       volumes:
       - name: jenkins-home
         persistentVolumeClaim:
           claimName: jenkins-pvc
+      - name: docker-config
+        secret:
+          secretName: dockerhub-secret
+          items:
+          - key: .dockerconfigjson
+            path: config.json
+
 
