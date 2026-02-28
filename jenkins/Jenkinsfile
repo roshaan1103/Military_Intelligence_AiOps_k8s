@@ -5,7 +5,7 @@ pipeline {
         DOCKER_IMAGE = "roshaan1103/mi-aiops-app"
         DOCKER_TAG = "${BUILD_NUMBER}"
         NAMESPACE = "jenkins"
-        JOB_NAME = "kaniko-${BUILD_NUMBER}"
+        JOB_NAME = "mi-aiops-${BUILD_NUMBER}"
     }
 
     stages {
@@ -60,12 +60,12 @@ EOF
                 sh """
                 echo "Deploying with Helm..."
 
-                helm upgrade --install mi-aiops ./helm/kaniko-app \
+                helm upgrade --install mi-aiops-app ./mi-aiops-app \
                   --namespace ${NAMESPACE} \
                   --set image.tag=${DOCKER_TAG}
 
                 echo "Waiting for rollout..."
-                kubectl rollout status deployment/mi-aiops \
+                kubectl rollout status deployment/mi-aiops-app \
                   -n ${NAMESPACE} --timeout=300s
                 """
             }

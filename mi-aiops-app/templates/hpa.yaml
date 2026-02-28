@@ -2,14 +2,14 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "kaniko-app.fullname" . }}
+  name: {{ include "mi-aiops-app.fullname" . }}
   labels:
-    {{- include "kaniko-app.labels" . | nindent 4 }}
+    {{- include "mi-aiops-app.labels" . | nindent 4 }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ include "kaniko-app.fullname" . }}
+    name: {{ include "mi-aiops-app.fullname" . }}
   minReplicas: {{ .Values.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.autoscaling.maxReplicas }}
   metrics:

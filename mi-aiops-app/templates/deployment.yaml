@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "kaniko-app.fullname" . }}
+  name: {{ include "mi-aiops-app.fullname" . }}
   labels:
-    {{- include "kaniko-app.labels" . | nindent 4 }}
+    {{- include "mi-aiops-app.labels" . | nindent 4 }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
   selector:
     matchLabels:
-      {{- include "kaniko-app.selectorLabels" . | nindent 6 }}
+      {{- include "mi-aiops-app.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -18,7 +18,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "kaniko-app.labels" . | nindent 8 }}
+        {{- include "mi-aiops-app.labels" . | nindent 8 }}
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -27,16 +27,19 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "kaniko-app.serviceAccountName" . }}
+      serviceAccountName: {{ include "mi-aiops-app.serviceAccountName" . }}
       {{- with .Values.podSecurityContext }}
       securityContext:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
         - name: {{ .Chart.Name }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-
           ports:
             - containerPort: 8080
           resources:
@@ -58,7 +61,7 @@ spec:
             initialDelaySeconds: 40
             periodSeconds: 15
             timeoutSecond: 5
-            failureThreshold: 5 
+            failureThreshold: 5
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 10 }}
@@ -73,3 +76,4 @@ spec:
       tolerations:
         {{- toYaml . | nindent 10 }}
       {{- end }}
+
